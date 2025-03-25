@@ -26,9 +26,10 @@ dependencies = [
     "types-requests >=2.31.0,<3.0.0",
     "types-aiofiles >=24.1.0.20240626,<25.0.0",
     "typing-extensions >=4.12.2,<5.0.0",
-    "pydantic>=2.10.6",
-    "python-json-logger>=3.2.1",
-    "filetype>=1.2.0",
+    "pydantic >=2.10.6",
+    "python-json-logger >=3.2.1",
+    "filetype >=1.2.0",
+    "exa-py >=1.9.1,<2.0.0",
 ]
 
 [project.optional-dependencies]

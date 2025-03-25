@@ -25,6 +25,8 @@ from core.utils import (
     generate_id,
     num_tokens,
 )
+import asyncio
+import requests
 
 from ..base.agent.agent import RAGAgentConfig
 
@@ -259,62 +261,62 @@ class RAGAgentMixin:
         self.search_results_collector.add_aggregate_result(agg)
         return agg
 
-    # Web Search Tool
-    def web_search(self) -> Tool:
-        return Tool(
-            name="web_search",
-            description=(
-                "Search for information on the web - use this tool when the user "
-                "query needs LIVE or recent data from the internet."
-            ),
-            results_function=self._web_search_function,
-            llm_format_function=self.format_search_results_for_llm,
-            parameters={
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "The query to search with an external web API.",
-                    },
-                },
-                "required": ["query"],
-            },
-        )
+    # # Web Search Tool
+    # def web_search(self) -> Tool:
+    #     return Tool(
+    #         name="web_search",
+    #         description=(
+    #             "Search for information on the web - use this tool when the user "
+    #             "query needs LIVE or recent data from the internet."
+    #         ),
+    #         results_function=self._web_search_function,
+    #         llm_format_function=self.format_search_results_for_llm,
+    #         parameters={
+    #             "type": "object",
+    #             "properties": {
+    #                 "query": {
+    #                     "type": "string",
+    #                     "description": "The query to search with an external web API.",
+    #                 },
+    #             },
+    #             "required": ["query"],
+    #         },
+    #     )
 
-    async def _web_search_function(
-        self,
-        query: str,
-        *args,
-        **kwargs,
-    ) -> AggregateSearchResult:
-        """
-        Calls an external search engine (Serper, Google, etc.) asynchronously
-        and returns results in an AggregateSearchResult.
-        """
-        import asyncio
+    # async def _web_search_function(
+    #     self,
+    #     query: str,
+    #     *args,
+    #     **kwargs,
+    # ) -> AggregateSearchResult:
+    #     """
+    #     Calls an external search engine (Serper, Google, etc.) asynchronously
+    #     and returns results in an AggregateSearchResult.
+    #     """
+    #     import asyncio
 
-        from ..utils.serper import SerperClient  # adjust your import
+    #     from ..utils.serper import SerperClient  # adjust your import
 
-        serper_client = SerperClient()
+    #     serper_client = SerperClient()
 
-        # If SerperClient.get_raw is not already async, wrap it in run_in_executor
-        raw_results = await asyncio.get_event_loop().run_in_executor(
-            None,  # Uses the default executor
-            lambda: serper_client.get_raw(query),
-        )
+    #     # If SerperClient.get_raw is not already async, wrap it in run_in_executor
+    #     raw_results = await asyncio.get_event_loop().run_in_executor(
+    #         None,  # Uses the default executor
+    #         lambda: serper_client.get_raw(query),
+    #     )
 
-        # If from_serper_results is not already async, wrap it in run_in_executor too
-        web_response = await asyncio.get_event_loop().run_in_executor(
-            None, lambda: WebSearchResult.from_serper_results(raw_results)
-        )
+    #     # If from_serper_results is not already async, wrap it in run_in_executor too
+    #     web_response = await asyncio.get_event_loop().run_in_executor(
+    #         None, lambda: WebSearchResult.from_serper_results(raw_results)
+    #     )
 
-        agg = AggregateSearchResult(
-            chunk_search_results=None,
-            graph_search_results=None,
-            web_search_results=web_response.organic_results,
-        )
-        self.search_results_collector.add_aggregate_result(agg)
-        return agg
+    #     agg = AggregateSearchResult(
+    #         chunk_search_results=None,
+    #         graph_search_results=None,
+    #         web_search_results=web_response.organic_results,
+    #     )
+    #     self.search_results_collector.add_aggregate_result(agg)
+    #     return agg
 
     def search_files(self) -> Tool:
         """
@@ -368,6 +370,142 @@ class RAGAgentMixin:
         self.search_results_collector.add_aggregate_result(agg)
         return agg
 
+    # def web_scrape(self) -> Tool:
+    #     """
+    #     A new Tool that uses Firecrawl to scrape a single URL and return
+    #     its contents in an LLM-friendly format (e.g. markdown).
+    #     """
+    #     return Tool(
+    #         name="web_scrape",
+    #         description=(
+    #             "Use Firecrawl to scrape a single webpage and retrieve its contents "
+    #             "as clean markdown. Useful when you need the entire body of a page, "
+    #             "not just a quick snippet or standard web search result."
+    #         ),
+    #         results_function=self._web_scrape_function,
+    #         llm_format_function=self.format_search_results_for_llm,
+    #         parameters={
+    #             "type": "object",
+    #             "properties": {
+    #                 "url": {
+    #                     "type": "string",
+    #                     "description": (
+    #                         "The absolute URL of the webpage you want to scrape. "
+    #                         "Example: 'https://docs.firecrawl.dev/getting-started'"
+    #                     ),
+    #                 }
+    #             },
+    #             "required": ["url"],
+    #         },
+    #     )
+
+    # async def _web_scrape_function(
+    #     self,
+    #     url: str,
+    #     *args,
+    #     **kwargs,
+    # ) -> AggregateSearchResult:
+    #     """
+    #     Performs the Firecrawl scrape asynchronously, returning results
+    #     as an `AggregateSearchResult` with a single WebPageSearchResult.
+    #     """
+    #     import asyncio
+
+    #     from firecrawl import FirecrawlApp
+
+    #     app = FirecrawlApp()
+    #     logger.debug(f"[Firecrawl] Scraping URL={url}")
+
+    #     # Create a proper async wrapper for the synchronous scrape_url method
+    #     # This offloads the blocking operation to a thread pool
+    #     response = await asyncio.get_event_loop().run_in_executor(
+    #         None,  # Uses the default executor
+    #         lambda: app.scrape_url(
+    #             url=url,
+    #             params={"formats": ["markdown"]},
+    #         ),
+    #     )
+
+    #     markdown_text = response.get("markdown", "")
+    #     metadata = response.get("metadata", {})
+    #     page_title = metadata.get("title", "Untitled page")
+
+    #     if len(markdown_text) > 100_000:
+    #         markdown_text = (
+    #             markdown_text[:100_000] + "...FURTHER CONTENT TRUNCATED..."
+    #         )
+
+    #     # Create a single WebPageSearchResult HACK - TODO FIX
+    #     web_result = WebPageSearchResult(
+    #         title=page_title,
+    #         link=url,
+    #         snippet=markdown_text,
+    #         position=0,
+    #         id=generate_id(markdown_text),
+    #         type="firecrawl",
+    #     )
+
+    #     agg = AggregateSearchResult(web_search_results=[web_result])
+
+    #     # Add results to the collector
+    #     if self.search_results_collector:
+    #         self.search_results_collector.add_aggregate_result(agg)
+
+    #     return agg
+
+
+    def web_search(self) -> Tool:
+        return Tool(
+            name="web_search",
+            description=(
+                "Search for information on the web - use this tool when the user "
+                "query needs LIVE or recent data from the internet."
+            ),
+            results_function=self._web_search_function,
+            llm_format_function=self.format_search_results_for_llm,
+            parameters={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The query to search with Brave Search API.",
+                    },
+                },
+                "required": ["query"],
+            },
+        )
+
+    async def _web_search_function(
+        self,
+        query: str,
+        *args,
+        **kwargs,
+    ) -> AggregateSearchResult:
+        """
+        Calls Brave Search API asynchronously and returns results in an AggregateSearchResult.
+        """
+        import asyncio
+        from ..utils.brave import BraveClient
+
+        brave_client = BraveClient()
+
+        raw_results = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: brave_client.search(query),
+        )
+
+        web_response = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: WebSearchResult.from_brave_results(raw_results)
+        )
+
+        agg = AggregateSearchResult(
+            chunk_search_results=None,
+            graph_search_results=None,
+            web_search_results=web_response.organic_results,
+        )
+        self.search_results_collector.add_aggregate_result(agg)
+        return agg
+    
     def format_search_results_for_llm(
         self, results: AggregateSearchResult
     ) -> str:
@@ -384,13 +522,13 @@ class RAGAgentMixin:
 
     def web_scrape(self) -> Tool:
         """
-        A new Tool that uses Firecrawl to scrape a single URL and return
-        its contents in an LLM-friendly format (e.g. markdown).
+        A new Tool that uses EXA AI to scrape a single URL and return
+        its contents in an LLM-friendly format (e.g., markdown).
         """
         return Tool(
             name="web_scrape",
             description=(
-                "Use Firecrawl to scrape a single webpage and retrieve its contents "
+                "Use EXA AI to scrape a single webpage and retrieve its contents "
                 "as clean markdown. Useful when you need the entire body of a page, "
                 "not just a quick snippet or standard web search result."
             ),
@@ -403,13 +541,14 @@ class RAGAgentMixin:
                         "type": "string",
                         "description": (
                             "The absolute URL of the webpage you want to scrape. "
-                            "Example: 'https://docs.firecrawl.dev/getting-started'"
+                            "Example: 'https://exa.ai/scrape-docs'"
                         ),
                     }
                 },
                 "required": ["url"],
             },
         )
+
 
     async def _web_scrape_function(
         self,
@@ -418,28 +557,37 @@ class RAGAgentMixin:
         **kwargs,
     ) -> AggregateSearchResult:
         """
-        Performs the Firecrawl scrape asynchronously, returning results
+        Performs the EXA AI scrape asynchronously, returning results
         as an `AggregateSearchResult` with a single WebPageSearchResult.
         """
-        import asyncio
+        logger.debug(f"[EXA AI] Scraping URL={url}")
 
-        from firecrawl import FirecrawlApp
-
-        app = FirecrawlApp()
-        logger.debug(f"[Firecrawl] Scraping URL={url}")
-
-        # Create a proper async wrapper for the synchronous scrape_url method
-        # This offloads the blocking operation to a thread pool
         response = await asyncio.get_event_loop().run_in_executor(
-            None,  # Uses the default executor
-            lambda: app.scrape_url(
-                url=url,
-                params={"formats": ["markdown"]},
+            None,
+            lambda: requests.post(
+                "https://api.exa.ai/search",
+                headers={
+                    "Authorization": f"Bearer {self.exa_api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "query": url,
+                    "useAutoprompt": True,
+                    "type": "auto",
+                    "numResults": 1,
+                    "highlights": {
+                        "numSentences": 2,
+                        "highlightsPerUrl": 2
+                    }
+                }
             ),
         )
 
-        markdown_text = response.get("markdown", "")
-        metadata = response.get("metadata", {})
+        response.raise_for_status()
+        result_data = response.json()
+
+        markdown_text = result_data.get("highlights", "")
+        metadata = result_data.get("metadata", {})
         page_title = metadata.get("title", "Untitled page")
 
         if len(markdown_text) > 100_000:
@@ -447,24 +595,21 @@ class RAGAgentMixin:
                 markdown_text[:100_000] + "...FURTHER CONTENT TRUNCATED..."
             )
 
-        # Create a single WebPageSearchResult HACK - TODO FIX
         web_result = WebPageSearchResult(
             title=page_title,
             link=url,
             snippet=markdown_text,
             position=0,
             id=generate_id(markdown_text),
-            type="firecrawl",
+            type="exa_ai",
         )
 
         agg = AggregateSearchResult(web_search_results=[web_result])
 
-        # Add results to the collector
         if self.search_results_collector:
             self.search_results_collector.add_aggregate_result(agg)
 
         return agg
-
 
 class R2RRAGAgent(RAGAgentMixin, R2RAgent):
     """

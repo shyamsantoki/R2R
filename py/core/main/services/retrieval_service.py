@@ -1936,7 +1936,7 @@ class RetrievalService(Service):
         search_settings: SearchSettings = SearchSettings(),
     ) -> AggregateSearchResult:
         """
-        Perform a web search using an external search engine API (Serper).
+        Perform a web search using Brave Search API.
 
         Args:
             query: The search query string
@@ -1946,17 +1946,16 @@ class RetrievalService(Service):
             AggregateSearchResult containing web search results
         """
         try:
-            # Import the Serper client here to avoid circular imports
-            from core.utils.serper import SerperClient
+            from core.utils.brave import BraveClient
 
-            # Initialize the Serper client
-            serper_client = SerperClient()
+            # Initialize the Brave client
+            brave_client = BraveClient()
 
-            # Perform the raw search using Serper API
-            raw_results = serper_client.get_raw(query)
+            # Perform the raw search using Brave Search API
+            raw_results = brave_client.search(query)
 
             # Process the raw results into a WebSearchResult object
-            web_response = WebSearchResult.from_serper_results(raw_results)
+            web_response = WebSearchResult.from_brave_results(raw_results)
 
             # Create an AggregateSearchResult with the web search results
             agg_result = AggregateSearchResult(

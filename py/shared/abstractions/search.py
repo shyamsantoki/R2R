@@ -215,41 +215,62 @@ class PeopleAlsoAskResult(R2RSerializable):
 
 class WebSearchResult(R2RSerializable):
     organic_results: list[WebPageSearchResult] = []
-    related_searches: list[RelatedSearchResult] = []
-    people_also_ask: list[PeopleAlsoAskResult] = []
+    # related_searches: list[RelatedSearchResult] = []
+    # people_also_ask: list[PeopleAlsoAskResult] = []
 
+    # @classmethod
+    # def from_serper_results(cls, results: list[dict]) -> "WebSearchResult":
+    #     organic = []
+    #     related = []
+    #     paa = []
+
+    #     for result in results:
+    #         if result["type"] == "organic":
+    #             organic.append(
+    #                 WebPageSearchResult(
+    #                     **result, id=generate_id_from_label(result.get("link"))
+    #                 )
+    #             )
+    #         elif result["type"] == "relatedSearches":
+    #             related.append(
+    #                 RelatedSearchResult(
+    #                     **result,
+    #                     id=generate_id_from_label(result.get("query")),
+    #                 )
+    #             )
+    #         elif result["type"] == "peopleAlsoAsk":
+    #             paa.append(
+    #                 PeopleAlsoAskResult(
+    #                     **result, id=generate_id_from_label(result.get("link"))
+    #                 )
+    #             )
+
+    #     return cls(
+    #         organic_results=organic,
+    #         related_searches=related,
+    #         people_also_ask=paa,
+    #     )
+    
     @classmethod
-    def from_serper_results(cls, results: list[dict]) -> "WebSearchResult":
+    def from_brave_results(cls, results: list[dict]) -> "WebSearchResult":
         organic = []
-        related = []
-        paa = []
 
         for result in results:
-            if result["type"] == "organic":
-                organic.append(
-                    WebPageSearchResult(
-                        **result, id=generate_id_from_label(result.get("link"))
+            if result["type"] == "web":
+                search_results = result["results"]
+                for index, se_result in enumerate(search_results, start=1):
+                    organic.append(
+                        WebPageSearchResult(
+                            title=se_result.get("title"),
+                            link=se_result.get("url"),
+                            snippet=se_result.get("description"),
+                            date=se_result.get("page_age"),
+                            position=index,
+                            id=generate_id_from_label(se_result.get("url")),
+                        )
                     )
-                )
-            elif result["type"] == "relatedSearches":
-                related.append(
-                    RelatedSearchResult(
-                        **result,
-                        id=generate_id_from_label(result.get("query")),
-                    )
-                )
-            elif result["type"] == "peopleAlsoAsk":
-                paa.append(
-                    PeopleAlsoAskResult(
-                        **result, id=generate_id_from_label(result.get("link"))
-                    )
-                )
 
-        return cls(
-            organic_results=organic,
-            related_searches=related,
-            people_also_ask=paa,
-        )
+        return cls(organic_results=organic)
 
 
 class AggregateSearchResult(R2RSerializable):

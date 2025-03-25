@@ -43,3 +43,140 @@ go.work.sum
 .ruff_cache/
 *.egg-info
 .venv
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages #
+############
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases #
+######################
+*.log
+*.sqlite
+*.db
+
+# IDE and Editor Files #
+########################
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Dependency Directories #
+##########################
+node_modules/
+bower_components/
+jspm_packages/
+vendor/
+.npm
+.pnpm-store/
+
+# Build and Compiled Output #
+#############################
+dist/
+build/
+out/
+target/
+*.build/
+*.bundle
+*.compiled
+
+# Environment and Configuration #
+#################################
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.venv/
+venv/
+ENV/
+env.bak/
+env/
+
+# Programming Language Specific #
+#################################
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# JavaScript/Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.next/
+.nuxt/
+.cache/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+
+# Ruby
+*.gem
+*.rbc
+/.config
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/test/tmp/
+/test/version_tmp/
+
+# C#
+bin/
+obj/
+*.suo
+*.user
+*.sln.docstates
+
+# TypeScript
+*.tsbuildinfo
+
+# Temporary Files #
+###################
+*.bak
+*.gch
+*.patch
+.tmp/
+
+# Project Specific Exclusions #
+###############################
+# Add any project-specific files or directories you want to ignore here
+# For example:
+# config.json
+# secret.key
+
+# Backup Files #
+################
+*.bak
+*.orig
+*.swp
+
+# Miscellaneous #
+#################
+.log
+.htaccess
