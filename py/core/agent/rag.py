@@ -27,6 +27,7 @@ from core.utils import (
 )
 import asyncio
 import requests
+import os
 
 from ..base.agent.agent import RAGAgentConfig
 
@@ -61,6 +62,7 @@ class RAGAgentMixin:
         max_context_window_tokens=512_000,
         **kwargs,
     ):
+        exa_api_key = os.getenv("EXA_API_KEY")
         # Save references to the retrieval logic
         self.search_settings = search_settings
         self.knowledge_search_method = knowledge_search_method
@@ -69,6 +71,7 @@ class RAGAgentMixin:
         self.max_tool_context_length = max_tool_context_length
         self.max_context_window_tokens = max_context_window_tokens
         self.search_results_collector = SearchResultsCollector()
+        self.exa_api_key = exa_api_key
         super().__init__(*args, **kwargs)
 
     def _register_tools(self):
